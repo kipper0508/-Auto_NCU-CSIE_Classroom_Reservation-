@@ -1,0 +1,34 @@
+{
+    "account": "",
+    "password": "",
+    "rooms":
+    {
+        "default_room":
+        {
+            "cid": 6,
+            "phone": "0912345678",
+            "teacher": "None",
+             "start_period":0,
+            "end_period": 0,
+            "note": "",
+            "date":
+            {
+                "2020-01-01": "2020-01-06"
+            }
+        },
+        "A206":
+        {
+            "cid": 9,
+            "phone": "0912345678",
+            "teacher": "None",
+             "start_period":1,
+            "end_period": 3,
+            "note": "",
+            "date":
+            {
+                "2020-01-06": "2020-01-011",
+                "2020-01-013": "2020-01-018"
+            }
+        }
+    }
+}
