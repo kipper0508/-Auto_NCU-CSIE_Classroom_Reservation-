@@ -71,5 +71,8 @@ optional arguments:
     $ sudo chmod 777 Auto_clock/clock.py
     ```
 
+* Config the crontab.
+    * your  "sign_online_day" in config.json have to be the same as the day in crontab
+
 
 
