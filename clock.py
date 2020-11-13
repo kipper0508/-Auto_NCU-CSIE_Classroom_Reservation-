@@ -55,8 +55,19 @@ def login(session, headers, account, password):
     tree = html.fromstring(r.text)
     token = tree.forms[0].fields['_csrf']
 
-    r = session.post('https://portal.ncu.edu.tw/leaving', data={ "_csrf" : token })
+    payload2 = {
+        'chineseName' : '%E8%B3%87%E5%B7%A5%E7%B3%BB%E5%80%9F%E6%95%99%E5%AE%A4%E7%B3%BB%E7%B5%B1',
+        'englishName' : 'CSIE+classroom',
+        'scopes' : 'identifier',
+        '_scope' : 'on',
+        'scopes' : 'chinese-name',
+        'scopes' : 'on',
+        "_csrf" : token
+    }
 
+    r = session.post('https://portal.ncu.edu.tw/leaving', data=payload2)
+    print(r.url)
+    '''
     payload2 = {
         'approval'  : "true"
     }
@@ -67,7 +78,7 @@ def login(session, headers, account, password):
 
     r = session.post('https://api.cc.ncu.edu.tw/oauth/oauth/confirm', data=payload2)
     #client_id=YzE2YzUxYjQtNDk2NS00NjRjLWJlNjktNzk1ZDkyMDVkZDhl ,client = what system you want to use
-
+    '''
     return
 
 def sign(session, classroom):
