@@ -52,33 +52,20 @@ def login(session, headers, account, password):
     
     r = session.get('https://classroom.csie.ncu.edu.tw/reserve.html')    #This whill redirect to https://classroom.csie.ncu.edu.tw/index.html
     # Get CSRF token from portal redirect form
+    print(r.url)
     tree = html.fromstring(r.text)
     token = tree.forms[0].fields['_csrf']
 
     payload2 = {
-        'chineseName' : '%E8%B3%87%E5%B7%A5%E7%B3%BB%E5%80%9F%E6%95%99%E5%AE%A4%E7%B3%BB%E7%B5%B1',
-        'englishName' : 'CSIE+classroom',
-        'scopes' : 'identifier',
-        '_scope' : 'on',
-        'scopes' : 'chinese-name',
-        'scopes' : 'on',
+        'chineseName' : '資工系借教室系統',
+        'englishName' : 'CSIE classroom',
+        'scopes' : ['identifier','chinese-name'], 
+        '_scope' : ['on','on'],
         "_csrf" : token
     }
 
-    r = session.post('https://portal.ncu.edu.tw/leaving', data=payload2)
-    print(r.url)
-    '''
-    payload2 = {
-        'approval'  : "true"
-    }
-
-    # Get CSRF token from portal redirect form
-    tree = html.fromstring(r.text)
-    payload2['_csrf'] = tree.forms[0].fields['_csrf']
-
-    r = session.post('https://api.cc.ncu.edu.tw/oauth/oauth/confirm', data=payload2)
-    #client_id=YzE2YzUxYjQtNDk2NS00NjRjLWJlNjktNzk1ZDkyMDVkZDhl ,client = what system you want to use
-    '''
+    r = session.post('https://portal.ncu.edu.tw/oauth/leaving', data=payload2)
+    
     return
 
 def sign(session, classroom):
@@ -99,15 +86,14 @@ def sign(session, classroom):
         'Accept-Encoding': 'gzip, deflate, br',
         'Accept-Language': 'zh-TW,zh;q=0.8,en-US;q=0.5,en;q=0.3',
         'Connection': 'keep-alive',
-        'Host': 'course.csie.ncu.edu.tw',
+        'Host': 'classroom.csie.ncu.edu.tw',
         'Upgrade-Insecure-Requests': '1',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
     }
 
-    r = session.get('https://course.csie.ncu.edu.tw/reserve.html',headers=headers2)
-
+    r = session.get('https://classroom.csie.ncu.edu.tw/reserve.html',headers=headers2)
     # Sign
-    r = session.post('https://course.csie.ncu.edu.tw/reserve', data=Sign)
+    r = session.post('https://classroom.csie.ncu.edu.tw/reserve', data=Sign)
     
     return
 
