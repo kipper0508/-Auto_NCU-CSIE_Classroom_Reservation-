@@ -15,7 +15,7 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 
 def main():
-    with open(args.config) as config_file:
+    with open(args.config,encoding='utf-8-sig') as config_file:
         config = json.load(config_file)
 
     headers = {
