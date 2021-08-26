@@ -33,6 +33,8 @@ def main():
     login(session, headers, config['account'], config['password'])
 
     sign(session, config["rooms"][args.classroom])
+
+    print("Sucess")
     
 
 def login(session, headers, account, password):
@@ -52,7 +54,7 @@ def login(session, headers, account, password):
     
     r = session.get('https://classroom.csie.ncu.edu.tw/reserve.html')    #This whill redirect to https://classroom.csie.ncu.edu.tw/index.html
     # Get CSRF token from portal redirect form
-    print(r.url)
+    #print(r.url)
     tree = html.fromstring(r.text)
     token = tree.forms[0].fields['_csrf']
 
@@ -78,7 +80,12 @@ def sign(session, classroom):
          "note": classroom["note"]
     }
     today=datetime.date.today().strftime("%Y-%m-%d")
-    use_day=classroom["date"][today]+" 00:00:00"
+    
+    try:
+        use_day=classroom["date"][today]+" 00:00:00"
+    except:
+        print("Date not found in config.")
+    
     Sign['date']=use_day
 
     headers2 = {
