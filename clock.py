@@ -14,6 +14,8 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
+week = {"Monday":0,"Tuesday":1,"Wednesday":2,"Thursday":3,"Friday":4,"Saturday":5,"Sunday":6}
+
 def main():
     with open(args.config,encoding='utf-8-sig') as config_file:
         config = json.load(config_file)
@@ -31,10 +33,14 @@ def main():
     session = requests.session()
 
     login(session, headers, config['account'], config['password'])
+    
+    if(len(config["rooms"][args.classroom]['date'])>1 and "EVERY" in config["rooms"][args.classroom]['date'] ):
+        print("Warning: Do not use EVERY tag with target day mode")
 
-    sign(session, config["rooms"][args.classroom])
-
-    print("Sucess")
+    if(sign(session, config["rooms"][args.classroom])):
+        print("Sucess")
+    else:
+        print("Error!")
     
 
 def login(session, headers, account, password):
@@ -74,35 +80,47 @@ def sign(session, classroom):
     Sign = {
         'cid': classroom["cid"],
         'phone': classroom["phone"],
-         'teacher': classroom["teacher"],
-         'start_period': classroom["start_period"],
-         'end_period':  classroom["end_period"],
-         "note": classroom["note"]
+        'teacher': classroom["teacher"],
+        'start_period': classroom["start_period"],
+        'end_period':  classroom["end_period"],
+        'note': classroom["note"]
     }
-    today=datetime.date.today().strftime("%Y-%m-%d")
-    
+
+    today=datetime.date.today()
+    use_day=""
+
     try:
-        use_day=classroom["date"][today]+" 00:00:00"
+        use_day=classroom["date"][today.strftime("%Y-%m-%d")]+" 00:00:00"
     except:
-        print("Date not found in config.")
+        try:
+            weekday = today.weekday()
+            if(week[classroom["date"]["EVERY"]]==weekday):
+                use_day = today + datetime.timedelta(days=14)
+                use_day = use_day.strftime("%Y-%m-%d")+" 00:00:00"
+        except:
+            print("Date not found in config.")
+            return False
     
-    Sign['date']=use_day
+    if(use_day!=""):
+        Sign['date']=use_day
+        print(Sign)
+        headers2 = {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'zh-TW,zh;q=0.8,en-US;q=0.5,en;q=0.3',
+            'Connection': 'keep-alive',
+            'Host': 'classroom.csie.ncu.edu.tw',
+            'Upgrade-Insecure-Requests': '1',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
+        }
 
-    headers2 = {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'zh-TW,zh;q=0.8,en-US;q=0.5,en;q=0.3',
-        'Connection': 'keep-alive',
-        'Host': 'classroom.csie.ncu.edu.tw',
-        'Upgrade-Insecure-Requests': '1',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
-    }
-
-    r = session.get('https://classroom.csie.ncu.edu.tw/reserve.html',headers=headers2)
-    # Sign
-    r = session.post('https://classroom.csie.ncu.edu.tw/reserve', data=Sign)
+        r = session.get('https://classroom.csie.ncu.edu.tw/reserve.html',headers=headers2)
+        # Sign
+        r = session.post('https://classroom.csie.ncu.edu.tw/reserve', data=Sign)
     
-    return
+        return True
+
+    return False
 
 if __name__ == '__main__':
     main()

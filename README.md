@@ -1,9 +1,8 @@
 # Auto_NCU-CSIE_Classroom_Reservation
 
-### Dependency
+### Require
 * Python3
-* requests
-* lxml
+* Python3 Lib : See in require.txt
 
 ### Usage
 ```shell
@@ -29,8 +28,11 @@ optional arguments:
     * cellphone number
     * teacher's name
     * date
-        * only can reserve 5 days early
-        * "sign_online_day" : "using_classroom_day"
+        * only can reserve 14 days early
+        * Target mode-> "sign_online_day" : "using_classroom_day"
+        * or use "EVERY" tag
+            * Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
+        * DO NOT Use "EVERY" and Target mode together in one
     * cid table
         * A203 : 6
         * A204 : 7
