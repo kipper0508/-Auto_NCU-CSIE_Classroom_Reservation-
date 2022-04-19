@@ -15,9 +15,9 @@ optional arguments:
 ``` 
 
 ### How to Use
-* Make sure you have installed the dependencies.
+* Make sure you have installed the requirement.
     ```shell
-    pip3 install requests lxml
+    pip3 install -r require.txt
     ```
 * Create config.json
     ```shell
@@ -32,7 +32,8 @@ optional arguments:
         * Target mode-> "sign_online_day" : "using_classroom_day"
         * or use "EVERY" tag
             * Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
-        * DO NOT Use "EVERY" and Target mode together in one
+            * Default reserve the week after next
+        * If "EVERY" tag and Target mode is in conflict, default using Target mode setting
     * cid table
         * A203 : 6
         * A204 : 7

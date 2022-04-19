@@ -16,10 +16,20 @@ os.chdir(dname)
 
 week = {"Monday":0,"Tuesday":1,"Wednesday":2,"Thursday":3,"Friday":4,"Saturday":5,"Sunday":6}
 
+def error_message(message):
+    print("\033[1;31mError:",end=" ")
+    print("\033[1;39m",end=" ")
+    print(message)
+    
 def main():
     with open(args.config,encoding='utf-8-sig') as config_file:
         config = json.load(config_file)
 
+    #Check EVERY and target mode together?
+    if(len(config["rooms"][args.classroom]['date'])>1 and "EVERY" in config["rooms"][args.classroom]['date'] ):
+        print("\033[1;33mWarning:",end=" ")
+        print("\033[1;39mYou are using EVERY tag and target day mode together")
+    
     headers = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
         'Accept-Encoding': 'gzip, deflate, br',
@@ -32,15 +42,10 @@ def main():
 
     session = requests.session()
 
-    login(session, headers, config['account'], config['password'])
-    
-    if(len(config["rooms"][args.classroom]['date'])>1 and "EVERY" in config["rooms"][args.classroom]['date'] ):
-        print("Warning: Do not use EVERY tag with target day mode")
-
-    if(sign(session, config["rooms"][args.classroom])):
-        print("Sucess")
-    else:
-        print("Error!")
+    if(login(session, headers, config['account'], config['password'])):
+        #reserversion
+        if(sign(session, config["rooms"][args.classroom])):
+            print("\033[1;32mSucess")
     
 
 def login(session, headers, account, password):
@@ -56,11 +61,17 @@ def login(session, headers, account, password):
     tree = html.fromstring(r.text)
     payload['_csrf'] = tree.forms[0].fields['_csrf']
 
-    r = session.post('https://portal.ncu.edu.tw/login', data=payload)
+    #login to NCU portal
+    r = session.post('https://portal.ncu.edu.tw/login', data=payload)   
     
-    r = session.get('https://classroom.csie.ncu.edu.tw/reserve.html')    #This whill redirect to https://classroom.csie.ncu.edu.tw/index.html
+    if(r.url=="https://portal.ncu.edu.tw/login"):
+        error_message("Your config about account or password is not set properly")
+        return False
+        
+    # redirect to https://classroom.csie.ncu.edu.tw/index.html but need to auth from portal
+    r = session.get('https://classroom.csie.ncu.edu.tw/reserve.html')
+
     # Get CSRF token from portal redirect form
-    #print(r.url)
     tree = html.fromstring(r.text)
     token = tree.forms[0].fields['_csrf']
 
@@ -72,9 +83,10 @@ def login(session, headers, account, password):
         "_csrf" : token
     }
 
+    # post auth to portal
     r = session.post('https://portal.ncu.edu.tw/oauth/leaving', data=payload2)
     
-    return
+    return True
 
 def sign(session, classroom):
     Sign = {
@@ -87,40 +99,45 @@ def sign(session, classroom):
     }
 
     today=datetime.date.today()
-    use_day=""
+    use_day="" #the day you want to use classroom
 
-    try:
+    # First check is today the target to do a reservation
+    if( today.strftime("%Y-%m-%d") in classroom["date"] ):
         use_day=classroom["date"][today.strftime("%Y-%m-%d")]+" 00:00:00"
-    except:
-        try:
-            weekday = today.weekday()
-            if(week[classroom["date"]["EVERY"]]==weekday):
-                use_day = today + datetime.timedelta(days=14)
-                use_day = use_day.strftime("%Y-%m-%d")+" 00:00:00"
-        except:
-            print("Date not found in config.")
-            return False
+    elif("EVERY" in classroom["date"] ):
+        weekday = today.weekday()
+        use_day = today + datetime.timedelta(days=14)
+        use_day = use_day.strftime("%Y-%m-%d")+" 00:00:00"
+    else:
+        error_message("Date not found in config.")
+        return False
     
-    if(use_day!=""):
-        Sign['date']=use_day
-        print(Sign)
-        headers2 = {
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Accept-Language': 'zh-TW,zh;q=0.8,en-US;q=0.5,en;q=0.3',
-            'Connection': 'keep-alive',
-            'Host': 'classroom.csie.ncu.edu.tw',
-            'Upgrade-Insecure-Requests': '1',
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
-        }
+    # if use_day is empty, means today is not fount in config 
+    Sign['date']=use_day
 
-        r = session.get('https://classroom.csie.ncu.edu.tw/reserve.html',headers=headers2)
-        # Sign
-        r = session.post('https://classroom.csie.ncu.edu.tw/reserve', data=Sign)
+    headers2 = {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Language': 'zh-TW,zh;q=0.8,en-US;q=0.5,en;q=0.3',
+        'Connection': 'keep-alive',
+        'Host': 'classroom.csie.ncu.edu.tw',
+        'Upgrade-Insecure-Requests': '1',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
+    }
+
+    r = session.get('https://classroom.csie.ncu.edu.tw/reserve.html',headers=headers2)
+    # Sign
+    r = session.post('https://classroom.csie.ncu.edu.tw/reserve', data=Sign)
+
     
-        return True
-
-    return False
+    if(r.text=="時間與其他預約重疊"):
+        error_message("The time you want has been reserved by others")
+        return False
+    elif(r.text!="OK"):
+        error_message("Your config about rooms is not set properly")
+        return False
+        
+    return True  
 
 if __name__ == '__main__':
     main()
